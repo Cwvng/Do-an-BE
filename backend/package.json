@@ -4,8 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --inspect backend/server.js ",
-    "server": "nodemon backend/server.js"
+    "dev": "nodemon server.js ",
+    "server": "node server.js"
   },
   "type": "module",
   "keywords": [],
@@ -21,6 +21,7 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "morgan": "^1.10.0",
     "nodemon": "^3.1.0"
   }
 }
