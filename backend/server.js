@@ -16,9 +16,6 @@ app.use(express.json()) // parse incoming rq with JSON payload (from req.body)
 app.use(cookieParser())
 
 
-app.use('/',(req,res)=>{
-    return res.status(200).json({message:"Server is running!"})
-})
 app.use("/api/auth", authRoutes)
 app.use("/api/messages", messageRoutes)
 app.use("/api/users", userRoutes)

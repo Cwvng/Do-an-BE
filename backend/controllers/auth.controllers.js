@@ -4,12 +4,12 @@ import generateToken from "../utils/generateToken.js";
 
 export const signup = async (req, res) => {
     try {
-        const {fullName, username, password, confirmPassword, gender} = req.body;
+        const {firstname,lastname, email, password, confirmPassword, gender} = req.body;
 
         if (password !== confirmPassword) {
             return res.status(400).json({error: "Password don't match"})
         }
-        const user = await User.findOne({username})
+        const user = await User.findOne({email})
         if (user) return res.status(400).json({error: "User existed"})
 
         //HASH PASSWORD
@@ -17,12 +17,13 @@ export const signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt)
 
         //
-        const malePic = `https://avatar.iran.liara.run/public/boy?username=${fullName}`
-        const femalePic = `https://avatar.iran.liara.run/public/girl?username=${fullName}`
+        const malePic = `https://avatar.iran.liara.run/public/boy?username=${firstname}`
+        const femalePic = `https://avatar.iran.liara.run/public/girl?username=${firstname}`
 
         const newUser = User({
-            fullName,
-            username,
+            firstname,
+            lastname,
+            email,
             password: hashedPassword,
             gender,
             profilePic: gender === 'male' ? malePic : femalePic
@@ -34,8 +35,9 @@ export const signup = async (req, res) => {
 
             res.status(201).json({
                 _id: newUser._id,
-                fullName: newUser.fullName,
-                username: newUser.username,
+                firstname: newUser.firstname,
+                lastname:newUser.lastname,
+                email: newUser.email,
                 profilePic: newUser.profilePic
             })
         } else {
@@ -75,4 +77,8 @@ export const logout = async (req, res) => {
         console.log("Logout error")
         res.status(500).json({error: err.message})
     }
+}
+
+export const secret =  (req, res)=>{
+
 }
