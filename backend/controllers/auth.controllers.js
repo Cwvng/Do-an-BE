@@ -1,6 +1,4 @@
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs"
-import generateToken from "../utils/generateToken.js";
 import JWT from 'jsonwebtoken';
 import {JWT_SECRET} from "../configs/index.js";
 
@@ -84,6 +82,16 @@ export const logout = async (req, res) => {
         res.status(500).json({error: err.message})
     }
 }
+
+export const authGoogle = async (req, res) => {
+    try {
+        return res.status(200).json({success: true})
+    } catch (error) {
+        console.log("authGoogle error")
+        res.status(500).json({error: error.message})
+    }
+}
+
 
 //Test Jwt sign and verify
 export const secret = (req, res) => {

@@ -18,12 +18,22 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        // required: true,
+    },
+    authGoogleId:{
+        type:String,
+        default:null
+    },
+    authType:{
+        type:String,
+        enum:['local', 'google'],
+        default: 'local'
     },
     gender: {
         type: String,
         required: true,
-        enum: ['male', 'female']
+        enum: ['male', 'female'],
+        default:'male'
     },
     profilePic: {
         type: String,
@@ -33,6 +43,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', async function (next) {
     try {
+        if(this.authType !== "local") next()
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
         next()
