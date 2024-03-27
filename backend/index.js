@@ -6,10 +6,12 @@ import connectDb from "./db/connectDb.js";
 import messageRoutes from "./routes/message.routes.js";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.routes.js";
-const app = express();
-const PORT = process.env.PORT || 5000
 
 dotenv.config()
+
+const app = express();
+const PORT = process.env.PORT
+
 
 app.use(logger('dev'))
 app.use(express.json()) // parse incoming rq with JSON payload (from req.body)

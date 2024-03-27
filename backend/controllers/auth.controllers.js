@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs"
 import generateToken from "../utils/generateToken.js";
 import JWT from 'jsonwebtoken';
+import {JWT_SECRET} from "../configs/index.js";
 
 const encodedToken = (userId) => {
     return JWT.sign({
@@ -9,7 +10,7 @@ const encodedToken = (userId) => {
         sub: userId,
         iat: new Date().getTime(),
         exp: new Date().setDate(new Date().getDate() + 3)
-    }, process.env.JWT_SECRET)
+    }, JWT_SECRET)
 }
 export const signup = async (req, res) => {
     try {
@@ -23,9 +24,7 @@ export const signup = async (req, res) => {
         const user = await User.findOne({email})
         if (user) return res.status(403).json({error: "Email already existed"})
 
-        //Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt)
+        //Hashed password before saving
 
         //Create default avatar
         const malePic = `https://avatar.iran.liara.run/public/boy?username=${firstname}`
@@ -36,7 +35,7 @@ export const signup = async (req, res) => {
             firstname,
             lastname,
             email,
-            password: hashedPassword,
+            password,
             gender,
             profilePic: gender === 'male' ? malePic : femalePic
         })
@@ -53,7 +52,8 @@ export const signup = async (req, res) => {
                 firstname: newUser.firstname,
                 lastname: newUser.lastname,
                 email: newUser.email,
-                profilePic: newUser.profilePic
+                profilePic: newUser.profilePic,
+                password: newUser.password
             })
         }
 
@@ -64,19 +64,12 @@ export const signup = async (req, res) => {
 }
 export const login = async (req, res) => {
     try {
-        const {username, password} = req.body;
-        const user = await User.findOne({username});
-        const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
-        if (!user || !isPasswordCorrect) {
-            res.status(400).json({error: 'Invalid username or password'});
-        }
-        generateToken(user._id, res);
-        res.status(200).json({
-            _id: user._id,
-            fullName: user.fullName,
-            userName: user.username,
-            profilePic: user.profilePic
-        })
+        //create token
+        const token = encodedToken(req.user._id);
+
+        res.setHeader("Authorization", token);
+        return res.status(200).json({success: true})
+
     } catch (err) {
         console.log("Login error")
         res.status(500).json({error: err.message})
@@ -92,6 +85,7 @@ export const logout = async (req, res) => {
     }
 }
 
+//Test Jwt sign and verify
 export const secret = (req, res) => {
-
+    return res.status(200).json({resource: true})
 }
