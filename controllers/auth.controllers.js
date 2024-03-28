@@ -51,9 +51,9 @@ export const signup = async (req, res) => {
 }
 export const login = async (req, res) => {
     try {
-        const {username} = req.body;
+        const {email} = req.body;
         const token = encodedToken(req.user._id)
-        const user = await User.findOne({username});
+        const user = await User.findOne({email});
         return res.status(200).json({
             user,
             access_token: token
@@ -71,6 +71,22 @@ export const logout = async (req, res) => {
     } catch (err) {
         console.log("Logout error")
         res.status(500).json({error: err.message})
+    }
+}
+
+export const googleLogin= async (req, res, next)=>{
+    try {
+        const {email}= req.user
+        const token = encodedToken(req.user._id)
+        const user = await User.findOne({email});
+        return res.status(200).json({
+            user,
+            access_token: token
+        })
+
+    } catch (error) {
+        console.log("Secret error")
+        res.status(500).json({error: error.message})
     }
 }
 
