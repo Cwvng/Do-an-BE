@@ -17,7 +17,6 @@ export const validateBody = (schema) => {
 };
 export const validateParams = (schema, name) => {
     return (req, res, next) => {
-        console.log('params ', req.params[name]);
         const validatorResult = schema.validate({param: req.params[name]})
 
         if (validatorResult.error) {
