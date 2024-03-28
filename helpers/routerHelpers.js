@@ -40,7 +40,9 @@ export const schemas = {
         firstname: Joi.string().min(2).required(),
         lastname: Joi.string().min(2).required(),
         email:Joi.string().regex(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/).required(),
-        password:Joi.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required()
+        password:Joi.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+        confirmPassword:Joi.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/).required(),
+        gender: Joi.string().required()
     }),
 
     authLoginSchema: Joi.object().keys({
