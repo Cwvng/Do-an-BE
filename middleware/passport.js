@@ -6,12 +6,13 @@ import User from '../models/user.model.js'
 import dotenv from 'dotenv'
 import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
+import { env } from '../config/enviroment.js'
 
 dotenv.config()
 
 passport.use(new JwtStrategy({
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken('Authorization'),
-  secretOrKey: process.env.JWT_SECRET
+  secretOrKey: env.JWT_SECRET
 }, async (payload, done) => {
   try {
     const user = await User.findById(payload.sub)
@@ -38,8 +39,8 @@ passport.use(new LocalStrategy({
 }))
 
 passport.use(new GooglePlusTokenStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET
+  clientID: env.GOOGLE_CLIENT_ID,
+  clientSecret: env.GOOGLE_CLIENT_SECRET
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const user = await User.findOne({

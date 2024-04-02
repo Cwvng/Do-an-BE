@@ -8,8 +8,9 @@ import messageRoutes from './routes/message.routes.js'
 import cookieParser from 'cookie-parser'
 import userRoutes from './routes/user.routes.js'
 import { errorHandlingMiddleware } from './middleware/errorHandlingMiddleware.js'
+import { env } from './config/enviroment.js'
 const app = express()
-const PORT = process.env.PORT || 5000
+const PORT = env.PORT || 5000
 
 dotenv.config()
 
