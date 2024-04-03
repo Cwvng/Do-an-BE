@@ -1,13 +1,16 @@
 import User from '../models/user.model.js'
-import bcrypt from 'bcryptjs'
-import generateToken, { encodedToken } from '../utils/generateToken.js'
+import { encodedToken } from '../utils/generateToken.js'
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../utils/ApiError.js'
 
 export const signup = async (req, res) => {
   try {
-    const { firstname, lastname, email, password, confirmPassword, gender } = req.body
-
+    const firstname = req.body.firstname.trim()
+    const lastname = req.body.lastname.trim()
+    const email = req.body.email.trim()
+    const password = req.body.password.trim()
+    const confirmPassword = req.body.confirmPassword.trim()
+    const gender = req.body.gender.trim()
     if (password !== confirmPassword) {
       return res.status(400).json({ error: "Password don't match" })
     }
@@ -47,7 +50,7 @@ export const signup = async (req, res) => {
 }
 export const login = async (req, res, next) => {
   try {
-    const { email } = req.body
+    const email = req.body.email.trim()
     const token = encodedToken(req.user._id)
     const user = await User.findOne({ email })
     if (!user) {
@@ -75,22 +78,13 @@ export const logout = async (req, res) => {
 
 export const googleLogin = async (req, res, next) => {
   try {
-    const { email } = req.user
+    const email = req.user.email.trim()
     const token = encodedToken(req.user._id)
     const user = await User.findOne({ email })
     return res.status(200).json({
       user,
       access_token: token
     })
-  } catch (error) {
-    console.log('Secret error')
-    res.status(500).json({ error: error.message })
-  }
-}
-
-export const secret = async (req, res) => {
-  try {
-
   } catch (error) {
     console.log('Secret error')
     res.status(500).json({ error: error.message })
