@@ -1,7 +1,7 @@
 import express from 'express'
-import protectRoute from '../middleware/protectRoute.js'
 import { getAllOtherUsers } from '../controllers/user.controller.js'
+import { handleAuthentication } from '../middleware/passport.js'
 
 const router = express.Router()
-router.get('/', protectRoute, getAllOtherUsers)
+router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getAllOtherUsers)
 export default router

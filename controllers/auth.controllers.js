@@ -58,6 +58,7 @@ export const login = async (req, res, next) => {
         error: 'Email or password incorrect'
       })
     }
+    res.setHeader('Authorization', token)
     return res.status(200).json({
       user,
       access_token: token
