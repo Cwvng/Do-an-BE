@@ -59,3 +59,52 @@ export const getAllChats = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+
+export const createGroupChat = async (req, res, next) => {
+  try {
+    if (!req.body.users || !req.body.name) {
+      return res.status(400).send({ message: 'Please fill all the fields' })
+    }
+
+    const users = JSON.parse(req.body.users)
+    if (users.length < 2) {
+      return res.status(400).send({ message: 'Group chat required more than 2 users' })
+    }
+    users.push(req.user)
+
+    const groupChat = await Chat.create({
+      chatName: req.body.name,
+      users,
+      isGroupChat: true,
+      groupAdmin: req.user
+    })
+
+    const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
+      .populate('users', '-password')
+      .populate('groupAdmin', '-password')
+
+    res.status(200).send(fullGroupChat)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+export const renameGroupChat = async (req, res, next) => {
+  try {
+    const { chatId, name } = req.body
+
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      { chatName: name },
+      { new: true }
+    ).populate('users', '-password')
+      .populate('groupAdmin', '-password')
+
+    if (!updatedChat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
+    res.status(200).send({
+      message: 'Change name successfully',
+      updatedChat
+    })
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
