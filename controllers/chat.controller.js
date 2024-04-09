@@ -43,8 +43,18 @@ export const accessChat = async (req, res, next) => {
 }
 export const getAllChats = async (req, res, next) => {
   try {
-    const chats = await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
-    res.status(200).send(chats)
+    await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+      .populate('users', '-password')
+      .populate('groupAdmin', '-password')
+      .populate('latestMessage')
+      .sort({ updatedAt: -1 })
+      .then(async (results) => {
+        results = await User.populate(results, {
+          path: 'latestMessage.sender',
+          select: 'name profilePic email'
+        })
+        res.status(200).send(results)
+      })
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
