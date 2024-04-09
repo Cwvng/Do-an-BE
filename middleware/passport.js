@@ -1,15 +1,16 @@
 import passport from 'passport'
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
+import { ExtractJwt, Strategy as JwtStrategy } from 'passport-jwt'
 import { Strategy as LocalStrategy } from 'passport-local'
 import GooglePlusTokenStrategy from 'passport-google-plus-token'
 import User from '../models/user.model.js'
 import dotenv from 'dotenv'
+import { env } from '../config/enviroment.js'
 import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
-import { env } from '../config/enviroment.js'
 
 dotenv.config()
 
+// use for protected route
 passport.use(new JwtStrategy({
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken('Authorization'),
   secretOrKey: env.JWT_SECRET
@@ -23,6 +24,7 @@ passport.use(new JwtStrategy({
   }
 }))
 
+// use for login
 passport.use(new LocalStrategy({
   usernameField: 'email'
 }, async (email, password, done) => {
@@ -38,6 +40,7 @@ passport.use(new LocalStrategy({
   }
 }))
 
+// use for google login
 passport.use(new GooglePlusTokenStrategy({
   clientID: env.GOOGLE_CLIENT_ID,
   clientSecret: env.GOOGLE_CLIENT_SECRET
@@ -65,3 +68,16 @@ passport.use(new GooglePlusTokenStrategy({
     done(error, false)
   }
 }))
+// Middleware để xử lý kết quả xác thực của Passport
+export const handleAuthentication = (strategy, req, res, next) => {
+  return passport.authenticate(strategy, { session: false }, (err, user, info) => {
+    if (err) {
+      next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+    }
+    if (!user) {
+      next(new ApiError(StatusCodes.UNAUTHORIZED, 'Email or password incorrect'))
+    }
+    req.user = user
+    next()
+  })(req, res, next)
+}

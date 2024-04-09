@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser'
 import userRoutes from './routes/user.routes.js'
 import { errorHandlingMiddleware } from './middleware/errorHandlingMiddleware.js'
 import { env } from './config/enviroment.js'
+import chatRoutes from './routes/chat.routes.js'
 const app = express()
 const PORT = env.PORT || 5000
 
@@ -22,6 +23,7 @@ app.use(cookieParser())
 app.use('/api/auth', authRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/chat', chatRoutes)
 
 app.use(errorHandlingMiddleware)
 

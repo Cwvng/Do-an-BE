@@ -1,27 +1,24 @@
 import jwt from 'jsonwebtoken'
-import User from '../models/user.model.js'
 import { env } from '../config/enviroment.js'
+import User from '../models/user.model.js'
+import ApiError from '../utils/ApiError.js'
+import { StatusCodes } from 'http-status-codes'
 
 const protectRoute = async (req, res, next) => {
-  try {
-    const token = req.cookies.jwt
-    if (!token) {
-      return res.status(401).json({ error: 'Unauthorized - No token provided' })
-    }
-    const decoded = jwt.verify(token, env.JWT_SECRET)
-    if (!decoded) {
-      return res.status(401).json({ error: 'Unauthorized - No token provided' })
-    }
+  let token
 
-    const user = await User.findById(decoded.userId).select('-password')
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' })
+  if (req.headers.authorization &&
+  req.headers.authorization.startsWith('Bearer')) {
+    try {
+      token = req.headers.authorization.split(' ')[1]
+
+      const decoded = jwt.verify(token, env.JWT_SECRET)
+      req.user = await User.findById(decoded.id).select('-password')
+
+      next()
+    } catch (err) {
+      next(new ApiError(StatusCodes.UNAUTHORIZED, 'Not authorized, token failed'))
     }
-    req.user = user
-    next()// calling the next function after middleware function
-  } catch (err) {
-    console.log('protectRoute error:', err.message)
-    res.status(500).json({ error: 'Internal server error' })
   }
 }
 
