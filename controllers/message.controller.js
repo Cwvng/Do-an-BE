@@ -1,53 +1,46 @@
-import Conversation from "../models/conversation.model.js";
-import Message from "../models/message.model.js";
+import Message from '../models/message.model.js'
+import User from '../models/user.model.js'
+import Chat from '../models/chat.model.js'
+import ApiError from '../utils/ApiError.js'
+import { StatusCodes } from 'http-status-codes'
 
-export const sendMessage = async (req, res) => {
-    try {
-        const {message} = req.body;
-        const {id: receiverId} = req.params;
-        const senderId = req.user._id;
-        let conversation = await Conversation.findOne({
-            participants: {$all: [senderId, receiverId]}
-        })
+export const sendMessage = async (req, res, next) => {
+  const { content, chatId } = req.body
 
-        if (!conversation) {
-            conversation = await Conversation.create({
-                participants: [senderId, receiverId]
-            })
-        }
+  if (!content || !chatId) {
+    next(new ApiError(StatusCodes.BAD_REQUEST, 'Invalid data passed into request'))
+  }
 
-        const newMessage = new Message({
-            senderId,
-            receiverId,
-            message
-        })
-        if (newMessage) conversation.messages.push(newMessage._id);
-        // TODO: `Socket io
+  const newMessage = {
+    sender: req.user._id,
+    content,
+    chat: chatId
+  }
 
-        await Promise.all([conversation.save(), newMessage.save()])
+  try {
+    let message = await Message.create(newMessage)
 
-        res.status(201).json(newMessage)
-    } catch (err) {
-        console.log("Send message error");
-        res.status(500).json({error: "Internal server error"})
-    }
+    message = await message.populate('sender', 'profilePic')
+    message = await message.populate('chat')
+    message = await User.populate(message, {
+      path: 'chat.users',
+      select: 'firstname lastname profilePic email'
+    })
+
+    await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message })
+
+    res.json(message)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
 }
-
-export const getMessages = async (req, res) => {
-    try {
-        const {id: receiverId} = req.params;
-        const senderId = req.user._id;
-
-        const conversation = await Conversation.findOne({
-            participants: {$all: [senderId, receiverId]}
-        }).populate("messages");
-        const messages = conversation.messages;
-
-        res.status(200).json(messages)
-    } catch (err) {
-        console.log("Get message error");
-        res.status(500).json({error: "Internal server error"})
-    }
-
-
+export const getAllMessagesFromChat = async (req, res, next) => {
+  try {
+    const messages = await Message.find({ chat: req.params.chatId })
+      .populate('sender', '-password')
+      .populate('chat')
+    res.json(messages)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
 }
