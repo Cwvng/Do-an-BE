@@ -51,7 +51,7 @@ export const getAllChats = async (req, res, next) => {
       .then(async (results) => {
         results = await User.populate(results, {
           path: 'latestMessage.sender',
-          select: 'name profilePic email'
+          select: 'firstname lastname profilePic email'
         })
         res.status(200).send(results)
       })
