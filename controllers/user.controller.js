@@ -24,8 +24,8 @@ export const getAllOtherUsers = async (req, res, next) => {
 export const getLoggedUserInfo = async (req, res, next) => {
   try {
     const loggedUserId = req.user._id
-    const allUsers = await User.find({ _id: loggedUserId })
-    res.status(200).json(allUsers)
+    const user = await User.find({ _id: loggedUserId })
+    res.status(200).json(user[0])
   } catch (err) {
     console.log('Error in userController/getUserInfoById: ', err.message)
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
