@@ -10,13 +10,14 @@ import userRoutes from './routes/user.routes.js'
 import { errorHandlingMiddleware } from './middleware/errorHandlingMiddleware.js'
 import { env } from './config/enviroment.js'
 import chatRoutes from './routes/chat.routes.js'
-const app = express()
+import { app, server } from './socket/socket.js'
+
 const PORT = env.PORT || 5000
 
 dotenv.config()
 
 app.use(cors())
-app.use(logger('dev'))
+// app.use(logger('dev'))
 app.use(express.json()) // parse incoming rq with JSON payload (from req.body)
 app.use(cookieParser())
 
@@ -27,7 +28,7 @@ app.use('/api/chat', chatRoutes)
 
 app.use(errorHandlingMiddleware)
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connectDb()
   console.log(`Server is running on port ${PORT}`)
 })
