@@ -3,6 +3,7 @@ import User from '../models/user.model.js'
 import Chat from '../models/chat.model.js'
 import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
+import { getReceiverSocketId, io } from '../socket/socket.js'
 
 export const sendMessage = async (req, res, next) => {
   const { content, chatId } = req.body
@@ -27,7 +28,14 @@ export const sendMessage = async (req, res, next) => {
       select: 'firstname lastname profilePic email'
     })
 
-    await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message })
+    const chat = await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message })
+    const receiverId = chat.users.find(user => user._id.toString() !== req.user._id.toString())._id.toString()
+
+    // Socket emit
+    const receiverSocketId = getReceiverSocketId(receiverId)
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('newMessage', message)
+    }
 
     res.json(message)
   } catch (error) {
