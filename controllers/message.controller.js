@@ -33,8 +33,13 @@ export const sendMessage = async (req, res, next) => {
 
     // Socket emit
     const receiverSocketId = getReceiverSocketId(receiverId)
+    const senderSocketId = getReceiverSocketId(req.user._id)
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('newMessage', message)
+      io.to(receiverSocketId).emit('updateChatList', message)
+    }
+    if (senderSocketId) {
+      io.to(senderSocketId).emit('updateChatList', message)
     }
 
     res.json(message)
