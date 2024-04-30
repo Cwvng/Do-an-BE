@@ -160,3 +160,15 @@ export const removeUserFromGroupChat = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+export const deleteChat = async (req, res, next) => {
+  try {
+    const chat = await Chat.findByIdAndDelete(req.params.chatId)
+
+    res.status(200).send({
+      message: 'Removed an user to group chat successfully',
+      chat
+    })
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}

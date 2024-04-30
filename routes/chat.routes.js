@@ -2,7 +2,7 @@ import express from 'express'
 import {
   accessChat,
   addUserToGroupChat,
-  createGroupChat,
+  createGroupChat, deleteChat,
   getAllChats,
   removeUserFromGroupChat,
   renameGroupChat
@@ -15,6 +15,7 @@ const router = express.Router()
 router.post('/', (req, res, next) => handleAuthentication('jwt', req, res, next), accessChat)
 router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getAllChats)
 router.get('/:chatId', (req, res, next) => handleAuthentication('jwt', req, res, next), getAllMessagesFromChat)
+router.delete('/:chatId', (req, res, next) => handleAuthentication('jwt', req, res, next), deleteChat)
 router.post('/group', (req, res, next) => handleAuthentication('jwt', req, res, next), createGroupChat)
 router.put('/group', (req, res, next) => handleAuthentication('jwt', req, res, next), renameGroupChat)
 router.put('/group-users', (req, res, next) => handleAuthentication('jwt', req, res, next), addUserToGroupChat)
