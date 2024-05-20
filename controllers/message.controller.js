@@ -5,7 +5,7 @@ import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { getReceiverSocketId, io } from '../socket/socket.js'
 
-export const sendMessage = async (req, res, next) => {
+export const createMessage = async (req, res, next) => {
   const { content, chatId } = req.body
 
   if (!content || !chatId) {
@@ -42,17 +42,17 @@ export const sendMessage = async (req, res, next) => {
       io.to(senderSocketId).emit('updateChatList', message)
     }
 
-    res.json(message)
+    res.status(StatusCodes.OK).send(message)
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
 }
-export const getAllMessagesFromChat = async (req, res, next) => {
+export const getMessageList = async (req, res, next) => {
   try {
     const messages = await Message.find({ chat: req.params.chatId })
       .populate('sender', '-password')
       .populate('chat')
-    res.json(messages)
+    res.status(StatusCodes.OK).send(messages)
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }

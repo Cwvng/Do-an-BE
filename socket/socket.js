@@ -1,7 +1,7 @@
 import { Server } from 'socket.io'
 import http from 'http'
 import express from 'express'
-import { env } from '../config/enviroment.js'
+import { env } from '../config/enviroment.config.js'
 
 const app = express()
 

@@ -4,7 +4,7 @@ import { Strategy as LocalStrategy } from 'passport-local'
 import GooglePlusTokenStrategy from 'passport-google-plus-token'
 import User from '../models/user.model.js'
 import dotenv from 'dotenv'
-import { env } from '../config/enviroment.js'
+import { env } from '../config/enviroment.config.js'
 import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
 

@@ -1,7 +1,31 @@
 import express from 'express'
-import { getAllOtherUsers, getLoggedUserInfo } from '../controllers/user.controller.js'
+import { getUserList } from '../controllers/user.controller.js'
 import { handleAuthentication } from '../middleware/passport.js'
 
 const router = express.Router()
-router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getAllOtherUsers)
+/**
+ * @openapi
+ * '/api/users':
+ *  get:
+ *     tags:
+ *     - User
+ *     summary: Get all users except logged user
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: number
+ *                  name:
+ *                    type: string
+ *       400:
+ *         description: Bad request
+ */
+router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getUserList)
 export default router
