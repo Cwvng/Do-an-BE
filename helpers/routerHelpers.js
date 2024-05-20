@@ -22,7 +22,7 @@ export const validateParams = (schema, name) => {
     const validatorResult = schema.validate({ param: req.params[name] })
 
     if (validatorResult.error) {
-      return res.status(400).json(validatorResult.error)
+      return res.status(StatusCodes.BAD_REQUEST).send(validatorResult.error)
     } else {
       if (!req.value) req.value = {}
       if (!req.value.params) req.value.params = {}

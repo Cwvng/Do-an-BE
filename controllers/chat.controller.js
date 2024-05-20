@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import Chat from '../models/chat.model.js'
 import User from '../models/user.model.js'
 
-export const accessChat = async (req, res, next) => {
+export const getChatDetail = async (req, res, next) => {
   const { userId } = req.body
 
   if (!userId) return next(new ApiError(StatusCodes.BAD_REQUEST, 'User Id not found'))
@@ -35,13 +35,13 @@ export const accessChat = async (req, res, next) => {
       }
       const createdChat = await Chat.create(chatData)
       const fullChat = await Chat.findOne({ _id: createdChat._id }).populate('users', '-password')
-      res.status(200).send(fullChat)
+      res.status(StatusCodes.OK).send(fullChat)
     }
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
-export const getAllChats = async (req, res, next) => {
+export const getChatList = async (req, res, next) => {
   try {
     await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
       .populate('users', '-password')
@@ -53,7 +53,7 @@ export const getAllChats = async (req, res, next) => {
           path: 'latestMessage.sender',
           select: 'firstname lastname profilePic email'
         })
-        res.status(200).send(results)
+        res.status(StatusCodes.OK).send(results)
       })
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
@@ -63,11 +63,11 @@ export const getAllChats = async (req, res, next) => {
 export const createGroupChat = async (req, res, next) => {
   try {
     if (!req.body.users || !req.body.name) {
-      return res.status(400).send({ message: 'Please fill all the fields' })
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Please fill all the fields' })
     }
     console.log(req.body.users)
     if (req.body.users.length < 2) {
-      return res.status(400).send({ message: 'Group chat required more than 2 users' })
+      return res.status(StatusCodes.BAD_REQUEST).send({ message: 'Group chat required more than 2 users' })
     }
     req.body.users.push(req.user)
 
@@ -82,7 +82,7 @@ export const createGroupChat = async (req, res, next) => {
       .populate('users', '-password')
       .populate('groupAdmin', '-password')
 
-    res.status(200).send(fullGroupChat)
+    res.status(StatusCodes.CREATED).send(fullGroupChat)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
@@ -99,7 +99,7 @@ export const renameGroupChat = async (req, res, next) => {
       .populate('groupAdmin', '-password')
 
     if (!updatedChat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-    res.status(200).send({
+    res.status(StatusCodes.OK).send({
       message: 'Change name successfully',
       updatedChat
     })
@@ -125,7 +125,7 @@ export const addUserToGroupChat = async (req, res, next) => {
     ).populate('users', '-password')
       .populate('groupAdmin', '-password')
 
-    res.status(200).send({
+    res.status(StatusCodes.OK).send({
       message: 'Added an user to group chat successfully',
       updatedChat
     })
@@ -152,7 +152,7 @@ export const removeUserFromGroupChat = async (req, res, next) => {
       .populate('groupAdmin', '-password')
 
     if (!updatedChat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-    res.status(200).send({
+    res.status(StatusCodes.OK).send({
       message: 'Removed an user to group chat successfully',
       updatedChat
     })
@@ -164,7 +164,7 @@ export const deleteChat = async (req, res, next) => {
   try {
     const chat = await Chat.findByIdAndDelete(req.params.chatId)
 
-    res.status(200).send({
+    res.status(StatusCodes.OK).send({
       message: 'Removed an user to group chat successfully',
       chat
     })
