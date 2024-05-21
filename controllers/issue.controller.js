@@ -1,4 +1,4 @@
-import ApiError from '../utils/ApiError.js'
+import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import Issue from '../models/issue.model.js'
 import Project from '../models/project.model.js'

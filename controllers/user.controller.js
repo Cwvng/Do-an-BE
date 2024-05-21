@@ -1,5 +1,5 @@
 import User from '../models/user.model.js'
-import ApiError from '../utils/ApiError.js'
+import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 
 export const getUserList = async (req, res, next) => {

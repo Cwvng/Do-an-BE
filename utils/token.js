@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { env } from '../config/enviroment.config.js'
 
-const generateToken = (userId, res) => {
+export const token = (userId, res) => {
   const token = jwt.sign({ userId }, env.JWT_SECRET, {
     expiresIn: '15d'
   })
@@ -21,4 +21,11 @@ export const encodedToken = (userId) => {
 
   }, env.JWT_SECRET)
 }
-export default generateToken
+export const isTokenValid = (token) => {
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET)
+    return { valid: true, decoded }
+  } catch (err) {
+    return { valid: false, error: err.message }
+  }
+}
