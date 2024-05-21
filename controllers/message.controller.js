@@ -1,7 +1,7 @@
 import Message from '../models/message.model.js'
 import User from '../models/user.model.js'
 import Chat from '../models/chat.model.js'
-import ApiError from '../utils/ApiError.js'
+import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { getReceiverSocketId, io } from '../socket/socket.js'
 

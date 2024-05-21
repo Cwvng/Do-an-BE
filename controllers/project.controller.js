@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes'
-import ApiError from '../utils/ApiError.js'
+import ApiError from '../utils/apiError.js'
 import Project from '../models/project.model.js'
 
 export const createProject = async (req, res, next) => {

@@ -5,7 +5,7 @@ import GooglePlusTokenStrategy from 'passport-google-plus-token'
 import User from '../models/user.model.js'
 import dotenv from 'dotenv'
 import { env } from '../config/enviroment.config.js'
-import ApiError from '../utils/ApiError.js'
+import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 
 dotenv.config()
