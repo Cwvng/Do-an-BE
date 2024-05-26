@@ -11,9 +11,14 @@ const issueSchema = new mongoose.Schema({
   parentIssue: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
   dueDate: { type: Date, default: Date.now },
-  images: [{ type: String }]
-
-  // TODO: comment,log,files
+  images: [{ type: String }],
+  history: [{
+    field: String,
+    oldValue: mongoose.Schema.Types.Mixed,
+    newValue: mongoose.Schema.Types.Mixed,
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updatedAt: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true })
 
 const Issue = mongoose.model('Issue', issueSchema)
