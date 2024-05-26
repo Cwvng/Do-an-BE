@@ -20,16 +20,23 @@ export const createProject = async (req, res, next) => {
 export const getProjectList = async (req, res, next) => {
   try {
     const userId = req.user._id
-    const projects = await Project.find({
+    const { name } = req.query
+    const query = {
       $or: [
         { projectManager: userId },
         { members: userId }
       ]
-    }).populate('members issues projectManager').sort({ updatedAt: -1 })
+    }
 
-    res.status(StatusCodes.CREATED).send(
-      projects
-    )
+    if (name) {
+      query.name = { $regex: name, $options: 'i' }
+    }
+
+    const projects = await Project.find(query)
+      .populate('members issues projectManager')
+      .sort({ updatedAt: -1 })
+
+    res.status(StatusCodes.OK).send(projects)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
@@ -42,14 +49,14 @@ export const getProjectDetail = async (req, res, next) => {
 
     // First, find the project to check the projectManager
     const project = await Project.findById(id)
-      .populate('members', '-password')
+      .populate('members projectManager', '-password')
 
     if (!project) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Project not found' })
     }
 
     // Check if the current user is the project manager
-    const isProjectManager = project.projectManager.toString() === userId.toString()
+    const isProjectManager = project.projectManager._id.toString() === userId.toString()
 
     // Populate issues based on whether the user is the project manager
     await project.populate({
