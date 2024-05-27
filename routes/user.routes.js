@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUserList } from '../controllers/user.controller.js'
+import { getUserList, updateUser } from '../controllers/user.controller.js'
 import { handleAuthentication } from '../middleware/passport.js'
 
 const router = express.Router()
@@ -28,4 +28,5 @@ const router = express.Router()
  *         description: Bad request
  */
 router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getUserList)
+router.patch('/', (req, res, next) => handleAuthentication('jwt', req, res, next), updateUser)
 export default router
