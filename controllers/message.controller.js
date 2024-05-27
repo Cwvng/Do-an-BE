@@ -57,3 +57,29 @@ export const getMessageList = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
 }
+export const deleteMessage = async (req, res, next) => {
+  try {
+    const messages = await Message.findByIdAndDelete(req.params.id)
+
+    if (!messages) next(new ApiError(StatusCodes.BAD_REQUEST, 'Message not found'))
+
+    res.status(StatusCodes.OK).send(messages)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
+}
+export const updateMessage = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    if (!id) next(new ApiError(StatusCodes.BAD_REQUEST, 'Message id not found'))
+
+    let message = await Message.findById(id)
+    if (!message) next(new ApiError(StatusCodes.BAD_REQUEST, 'Message not found'))
+
+    if (!message.isUpdated) { message = await Message.findByIdAndUpdate(id, { ...req.body, isUpdated: true }) }
+
+    res.status(StatusCodes.OK).send(message)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
+}

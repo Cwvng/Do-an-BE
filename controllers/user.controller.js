@@ -31,3 +31,19 @@ export const getLoggedUserInfo = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+export const updateUser = async (req, res, next) => {
+  try {
+    const userId = req.user._id
+    if (!userId) next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found'))
+
+    if (!req.body) next(new ApiError(StatusCodes.BAD_REQUEST, 'No provided data'))
+
+    const user = await User.findByIdAndUpdate(userId, req.body, { new: true, useFindAndModify: false })
+
+    if (!user) next(new ApiError(StatusCodes.BAD_REQUEST), 'Update user failed')
+
+    res.status(StatusCodes.OK).send(user)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
