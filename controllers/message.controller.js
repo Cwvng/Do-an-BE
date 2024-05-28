@@ -7,15 +7,18 @@ import { getReceiverSocketId, io } from '../socket/socket.js'
 
 export const createMessage = async (req, res, next) => {
   const { content, chatId } = req.body
-
-  if (!content || !chatId) {
+  if (!chatId) {
     next(new ApiError(StatusCodes.BAD_REQUEST, 'Invalid data passed into request'))
   }
 
   const newMessage = {
     sender: req.user._id,
-    content,
     chat: chatId
+  }
+
+  if (content) newMessage.content = content
+  if (req.files && req.files.length > 0) {
+    newMessage.images = req.files.map(file => file.path)
   }
 
   try {
@@ -79,6 +82,21 @@ export const updateMessage = async (req, res, next) => {
     if (!message.isUpdated) { message = await Message.findByIdAndUpdate(id, { ...req.body, isUpdated: true }) }
 
     res.status(StatusCodes.OK).send(message)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
+}
+export const getMessageImagesList = async (req, res, next) => {
+  try {
+    if (!req.params.chatId) next(new ApiError(StatusCodes.BAD_REQUEST, 'No chat id provided'))
+
+    const messages = await Message.find({ chat: req.params.chatId })
+    const imageUrls = messages
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .flatMap(message => message.images.map(image => ({ image, createdAt: message.createdAt })))
+      .filter(imageUrl => imageUrl !== undefined && imageUrl !== null && imageUrl !== '')
+
+    res.status(StatusCodes.OK).send(imageUrls)
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
