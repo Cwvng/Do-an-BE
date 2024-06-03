@@ -2,6 +2,8 @@ import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import Issue from '../models/issue.model.js'
 import Project from '../models/project.model.js'
+import IssueComment from '../models/comment.model.js'
+import User from '../models/user.model.js'
 
 export const createIssue = async (req, res, next) => {
   try {
@@ -146,6 +148,54 @@ export const updateIssue = async (req, res, next) => {
     await issue.save()
 
     res.status(StatusCodes.OK).send(issue)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const creatIssueComment = async (req, res, next) => {
+  const { content } = req.body
+  const { id } = req.params
+
+  const newComment = {
+    sender: req.user._id,
+    content
+  }
+
+  try {
+    let comment = await IssueComment.create(newComment)
+    comment = await User.populate(comment, {
+      path: 'sender',
+      select: 'firstname lastname profilePic email'
+    })
+    const issue = await Issue.findByIdAndUpdate(id, { $push: { comments: comment } },
+      { new: true, useFindAndModify: false })
+
+    res.status(StatusCodes.OK).send(issue)
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
+  }
+}
+export const getIssueComments = async (req, res, next) => {
+  try {
+    const issueId = req.params.id
+
+    const issue = await Issue.findById(issueId)
+      .populate({
+        path: 'comments',
+        populate: {
+          path: 'sender',
+          select: 'firstname lastname profilePic'
+        }
+      })
+
+    if (!issue) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Issue not found'))
+    }
+
+    issue.comments.sort((a, b) => b.createdAt - a.createdAt)
+
+    res.status(StatusCodes.OK).send(issue.comments)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
