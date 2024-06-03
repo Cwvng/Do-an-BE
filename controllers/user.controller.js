@@ -31,16 +31,31 @@ export const getLoggedUserInfo = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+
 export const updateUser = async (req, res, next) => {
   try {
-    const userId = req.user._id
-    if (!userId) next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found'))
+    const userId = req.user?._id
+    if (!userId) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found'))
+    }
 
-    if (!req.body) next(new ApiError(StatusCodes.BAD_REQUEST, 'No provided data'))
+    if (!req.body && !req.file) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'No provided data'))
+    }
 
-    const user = await User.findByIdAndUpdate(userId, req.body, { new: true, useFindAndModify: false })
+    const updateData = { ...req.body }
 
-    if (!user) next(new ApiError(StatusCodes.BAD_REQUEST), 'Update user failed')
+    if (req.files && req.files.length > 0) {
+      updateData.profilePic = req.files.map(file => file.path)[0]
+    }
+
+    console.log('profilePic', updateData.profilePic)
+
+    const user = await User.findByIdAndUpdate(userId, updateData, { new: true, useFindAndModify: false })
+
+    if (!user) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Update user failed'))
+    }
 
     res.status(StatusCodes.OK).send(user)
   } catch (err) {

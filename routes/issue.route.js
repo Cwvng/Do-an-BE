@@ -10,7 +10,7 @@ import {
 import uploadCloud from '../config/cloudinary.config.js'
 
 const router = express.Router()
-router.post('/', (req, res, next) => handleAuthentication('jwt', req, res, next), createIssue)
+router.post('/', (req, res, next) => handleAuthentication('jwt', req, res, next), uploadCloud.array('images', 3), createIssue)
 router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getIssueList)
 router.delete('/:id', (req, res, next) => handleAuthentication('jwt', req, res, next), deleteIssue)
 router.get('/:id', (req, res, next) => handleAuthentication('jwt', req, res, next), getIssueDetail)

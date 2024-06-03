@@ -12,6 +12,7 @@ const issueSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
   dueDate: { type: Date, default: Date.now },
   images: [{ type: String }],
+  remainingDays: { type: Number },
   history: [{
     field: String,
     oldValue: mongoose.Schema.Types.Mixed,
@@ -20,6 +21,14 @@ const issueSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
   }]
 }, { timestamps: true })
+
+// Pre-save middleware to calculate remainingDays
+issueSchema.pre('save', function (next) {
+  const currentDate = new Date()
+  const dueDate = new Date(this.dueDate)
+  this.remainingDays = Math.ceil((dueDate - currentDate) / (1000 * 60 * 60 * 24))
+  next()
+})
 
 const Issue = mongoose.model('Issue', issueSchema)
 export default Issue
