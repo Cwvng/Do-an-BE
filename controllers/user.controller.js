@@ -1,6 +1,7 @@
 import User from '../models/user.model.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
+import { v2 as cloudinary } from 'cloudinary'
 
 export const getUserList = async (req, res, next) => {
   try {
@@ -39,7 +40,7 @@ export const updateUser = async (req, res, next) => {
       return next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found'))
     }
 
-    if (!req.body && !req.file) {
+    if (!req.body && !req.files) {
       return next(new ApiError(StatusCodes.BAD_REQUEST, 'No provided data'))
     }
 
@@ -47,9 +48,17 @@ export const updateUser = async (req, res, next) => {
 
     if (req.files && req.files.length > 0) {
       updateData.profilePic = req.files.map(file => file.path)[0]
-    }
 
-    console.log('profilePic', updateData.profilePic)
+      // Delete old avatar in cloudinary server
+      const oldUser = await User.findById(userId)
+      if (oldUser && oldUser.profilePic) {
+        const imageName = 'doan20232/' + oldUser.profilePic.split('/').pop().split('.')[0]
+
+        await cloudinary.api.delete_resources(imageName, (error, result) => {
+          console.log(error, result)
+        })
+      }
+    }
 
     const user = await User.findByIdAndUpdate(userId, updateData, { new: true, useFindAndModify: false })
 
