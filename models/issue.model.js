@@ -19,7 +19,8 @@ const issueSchema = new mongoose.Schema({
     newValue: mongoose.Schema.Types.Mixed,
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     updatedAt: { type: Date, default: Date.now }
-  }]
+  }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
 }, { timestamps: true })
 
 // Pre-save middleware to calculate remainingDays
