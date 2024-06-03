@@ -8,6 +8,9 @@ export const getChatDetail = async (req, res, next) => {
 
   if (!userId) return next(new ApiError(StatusCodes.BAD_REQUEST, 'User Id not found'))
 
+  const sender = await User.findById(userId)
+  if (!sender) return next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found'))
+
   try {
     console.log(req.user._id, userId)
     let isChat = await Chat.find({
@@ -28,8 +31,9 @@ export const getChatDetail = async (req, res, next) => {
     if (isChat.length > 0) {
       res.send(isChat[0])
     } else {
+      console.log(sender)
       const chatData = {
-        chatName: 'sender',
+        chatName: sender.firstname + sender.lastname,
         isGroupChat: false,
         users: [req.user._id, userId]
       }
@@ -43,7 +47,14 @@ export const getChatDetail = async (req, res, next) => {
 }
 export const getChatList = async (req, res, next) => {
   try {
-    await Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+    const { name } = req.query
+    const chatQuery = { users: { $elemMatch: { $eq: req.user._id } } }
+
+    if (name) {
+      chatQuery.chatName = { $regex: name, $options: 'i' }
+    }
+
+    await Chat.find(chatQuery)
       .populate('users', '-password')
       .populate('groupAdmin', '-password')
       .populate('latestMessage')

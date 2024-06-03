@@ -1,6 +1,7 @@
 import express from 'express'
 import { getUserList, updateUser } from '../controllers/user.controller.js'
 import { handleAuthentication } from '../middleware/passport.js'
+import uploadCloud from '../config/cloudinary.config.js'
 
 const router = express.Router()
 /**
@@ -28,5 +29,5 @@ const router = express.Router()
  *         description: Bad request
  */
 router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getUserList)
-router.patch('/', (req, res, next) => handleAuthentication('jwt', req, res, next), updateUser)
+router.patch('/', (req, res, next) => handleAuthentication('jwt', req, res, next), uploadCloud.array('profilePic', 1), updateUser)
 export default router

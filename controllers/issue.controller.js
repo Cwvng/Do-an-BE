@@ -7,10 +7,16 @@ export const createIssue = async (req, res, next) => {
   try {
     const assignee = req.body.assignee || req.user._id
 
+    let images = []
+    if (req.files && req.files.length > 0) {
+      images = req.files.map(file => file.path)
+    }
+
     const newIssue = await Issue.create({
       ...req.body,
       assignee,
-      creator: req.user._id
+      creator: req.user._id,
+      images
     })
 
     const updatedProject = await Project.findByIdAndUpdate(
@@ -41,6 +47,8 @@ export const getIssueDetail = async (req, res, next) => {
       })
 
     if (issue) {
+      await issue.save()
+
       res.status(StatusCodes.OK).send(issue)
     } else {
       next(new ApiError(StatusCodes.BAD_REQUEST, 'Issue not found'))
@@ -49,37 +57,39 @@ export const getIssueDetail = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+
 export const getIssueList = async (req, res, next) => {
   try {
-    const { projectId, name } = req.query
-    const userId = req.user._id
+    const { projectId, label, priority, assignee } = req.query
+
+    if (!projectId) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project ID is required'))
+    }
 
     const project = await Project.findById(projectId)
     if (!project) {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Project not found'))
     }
 
-    let nameQuery = {}
-    if (name) {
-      nameQuery = { name: { $regex: name, $options: 'i' } }
+    const query = { project: projectId }
+
+    if (label) {
+      query.label = { $regex: label, $options: 'i' }
     }
 
-    let issueList
-    if (project.projectManager.toString() === userId.toString()) {
-      issueList = await Issue.find({ project: projectId, ...nameQuery })
-        .populate('assignee', '-password')
-        .sort({ updatedAt: -1 })
-    } else {
-      issueList = await Issue.find({
-        $and: [
-          {
-            $or: [{ assignee: userId }]
-          },
-          { project: projectId },
-          nameQuery
-        ]
-      }).populate('assignee', '-password').sort({ updatedAt: -1 })
+    if (priority) {
+      const priorities = priority.split(',')
+      query.priority = { $in: priorities }
     }
+
+    if (assignee) {
+      const assignees = assignee.split(',')
+      query.assignee = { $in: assignees }
+    }
+
+    const issueList = await Issue.find(query)
+      .populate('assignee', '-password')
+      .sort({ updatedAt: -1 })
 
     res.status(StatusCodes.OK).send(issueList)
   } catch (err) {
