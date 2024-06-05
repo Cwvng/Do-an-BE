@@ -1,6 +1,9 @@
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../utils/apiError.js'
 import Project from '../models/project.model.js'
+import Sprint from '../models/sprint.model.js'
+import Issue from '../models/issue.model.js'
+import User from '../models/user.model.js'
 
 export const createProject = async (req, res, next) => {
   try {
@@ -47,9 +50,9 @@ export const getProjectDetail = async (req, res, next) => {
     const { id } = req.params
     const userId = req.user._id
 
-    // First, find the project to check the projectManager
     const project = await Project.findById(id)
       .populate('members projectManager', '-password')
+      .populate('activeSprint')
 
     if (!project) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Project not found' })
@@ -98,6 +101,35 @@ export const updateProject = async (req, res, next) => {
 
       res.status(StatusCodes.OK).send(project)
     }
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const getProjectBacklogList = async (req, res, next) => {
+  try {
+    const projectId = req.params.id
+
+    const project = await Project.findById(projectId).populate({
+      path: 'backlog',
+      model: Sprint,
+      populate: {
+        path: 'issues',
+        model: Issue,
+        populate: {
+          path: 'assignee',
+          model: User
+        }
+      }
+    })
+
+    if (!project) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Project not found'))
+    }
+
+    const backlogSprints = project.backlog || []
+
+    return res.status(StatusCodes.OK).send(backlogSprints)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }

@@ -10,6 +10,7 @@ const issueSchema = new mongoose.Schema({
   creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   parentIssue: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  sprint: { type: mongoose.Schema.Types.ObjectId, ref: 'Sprint' },
   dueDate: { type: Date, default: Date.now },
   images: [{ type: String }],
   remainingDays: { type: Number },
@@ -20,8 +21,10 @@ const issueSchema = new mongoose.Schema({
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     updatedAt: { type: Date, default: Date.now }
   }],
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
-}, { timestamps: true })
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+  estimateTime: { type: Number },
+  loggedTime: { type: Number, default: 0 }
+}, { timestamps: true, required: true })
 
 // Pre-save middleware to calculate remainingDays
 issueSchema.pre('save', function (next) {

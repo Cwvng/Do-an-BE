@@ -13,6 +13,7 @@ import { app, server } from './socket/socket.js'
 import issueRoute from './routes/issue.route.js'
 import projectRoute from './routes/project.route.js'
 import swaggerDocs from './swagger/swagger.js'
+import sprintRoute from './routes/sprint.route.js'
 
 const PORT = env.PORT || 5000
 
@@ -29,6 +30,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/chat', chatRoutes)
 app.use('/api/issue', issueRoute)
 app.use('/api/project', projectRoute)
+app.use('/api/sprint', sprintRoute)
 
 app.use(errorHandlingMiddleware)
 
