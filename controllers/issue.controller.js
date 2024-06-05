@@ -4,6 +4,7 @@ import Issue from '../models/issue.model.js'
 import Project from '../models/project.model.js'
 import IssueComment from '../models/comment.model.js'
 import User from '../models/user.model.js'
+import Sprint from '../models/sprint.model.js'
 
 export const createIssue = async (req, res, next) => {
   try {
@@ -14,11 +15,18 @@ export const createIssue = async (req, res, next) => {
       images = req.files.map(file => file.path)
     }
 
+    const project = await Project.findById(req.body.project)
+
+    if (!project) next(new ApiError(StatusCodes.BAD_REQUEST, 'Project not found'))
+
+    const sprintId = req.body.sprintId || project.activeSprint._id
+
     const newIssue = await Issue.create({
       ...req.body,
       assignee,
       creator: req.user._id,
-      images
+      images,
+      sprint: sprintId
     })
 
     const updatedProject = await Project.findByIdAndUpdate(
@@ -26,10 +34,20 @@ export const createIssue = async (req, res, next) => {
       { $push: { issues: newIssue._id } },
       { new: true, useFindAndModify: false }
     )
+    const updatedSprint = await Sprint.findByIdAndUpdate(
+      sprintId,
+      { $push: { issues: newIssue._id } },
+      { new: true, useFindAndModify: false }
+    )
 
     if (!updatedProject) {
       return res.status(StatusCodes.NOT_FOUND).send({
         message: 'Project not found'
+      })
+    }
+    if (!updatedSprint) {
+      return res.status(StatusCodes.NOT_FOUND).send({
+        message: 'Sprint not found'
       })
     }
 
@@ -62,7 +80,7 @@ export const getIssueDetail = async (req, res, next) => {
 
 export const getIssueList = async (req, res, next) => {
   try {
-    const { projectId, label, priority, assignee } = req.query
+    const { projectId, label, priority, assignee, sprint } = req.query
 
     if (!projectId) {
       return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project ID is required'))
@@ -77,6 +95,9 @@ export const getIssueList = async (req, res, next) => {
 
     if (label) {
       query.label = { $regex: label, $options: 'i' }
+    }
+    if (sprint) {
+      query.sprint = sprint._id
     }
 
     if (priority) {
