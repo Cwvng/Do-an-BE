@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  dms-be:
+    image: cwvngtran/datn-be
+    container_name: datn-be
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: always
+    command: npm run dev -- --host 0.0.0.0
+    ports:
+      - "5000:5000"
+
