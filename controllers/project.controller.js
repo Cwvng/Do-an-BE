@@ -48,7 +48,6 @@ export const getProjectList = async (req, res, next) => {
 export const getProjectDetail = async (req, res, next) => {
   try {
     const { id } = req.params
-    const userId = req.user._id
 
     const project = await Project.findById(id)
       .populate('members projectManager', '-password')
@@ -57,16 +56,6 @@ export const getProjectDetail = async (req, res, next) => {
     if (!project) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Project not found' })
     }
-
-    // Check if the current user is the project manager
-    const isProjectManager = project.projectManager._id.toString() === userId.toString()
-
-    // Populate issues based on whether the user is the project manager
-    await project.populate({
-      path: 'issues',
-      match: isProjectManager ? {} : { assignee: userId },
-      select: '-password'
-    })
 
     res.status(StatusCodes.OK).send(project)
   } catch (err) {
@@ -116,6 +105,7 @@ export const getProjectBacklogList = async (req, res, next) => {
       populate: {
         path: 'issues',
         model: Issue,
+        options: { sort: { createdAt: -1 } },
         populate: {
           path: 'assignee',
           model: User
@@ -130,6 +120,21 @@ export const getProjectBacklogList = async (req, res, next) => {
     const backlogSprints = project.backlog || []
 
     return res.status(StatusCodes.OK).send(backlogSprints)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+export const getSprintDetails = async (req, res, next) => {
+  try {
+    const { sprintId } = req.params
+
+    const sprint = await Sprint.findById(sprintId).populate('issues')
+
+    if (!sprint) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Sprint not found'))
+    }
+
+    res.status(StatusCodes.OK).send(sprint)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }

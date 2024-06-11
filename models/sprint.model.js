@@ -6,7 +6,9 @@ const sprintSchema = new mongoose.Schema({
   issues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Issue' }],
   startDate: { type: Date, default: Date.now },
   endDate: { type: Date, default: Date.now },
-  sprintGoal: { type: String, trim: true }
+  sprintGoal: { type: String, trim: true },
+  isActive: { type: Boolean, default: false },
+  dailySummary: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DailySummary' }]
 
 }, { timestamps: true })
 
