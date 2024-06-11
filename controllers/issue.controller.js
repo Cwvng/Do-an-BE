@@ -1,10 +1,10 @@
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import Issue from '../models/issue.model.js'
-import Project from '../models/project.model.js'
 import IssueComment from '../models/comment.model.js'
 import User from '../models/user.model.js'
 import Sprint from '../models/sprint.model.js'
+import History from '../models/history.model.js'
 
 export const createIssue = async (req, res, next) => {
   try {
@@ -15,41 +15,35 @@ export const createIssue = async (req, res, next) => {
       images = req.files.map(file => file.path)
     }
 
-    const project = await Project.findById(req.body.project)
-
-    if (!project) next(new ApiError(StatusCodes.BAD_REQUEST, 'Project not found'))
-
-    const sprintId = req.body.sprintId || project.activeSprint._id
-
     const newIssue = await Issue.create({
       ...req.body,
       assignee,
       creator: req.user._id,
       images,
-      sprint: sprintId
+      sprint: req.body.sprintId
     })
 
-    const updatedProject = await Project.findByIdAndUpdate(
-      req.body.project,
-      { $push: { issues: newIssue._id } },
-      { new: true, useFindAndModify: false }
-    )
     const updatedSprint = await Sprint.findByIdAndUpdate(
-      sprintId,
+      req.body.sprintId,
       { $push: { issues: newIssue._id } },
       { new: true, useFindAndModify: false }
     )
 
-    if (!updatedProject) {
-      return res.status(StatusCodes.NOT_FOUND).send({
-        message: 'Project not found'
-      })
-    }
     if (!updatedSprint) {
       return res.status(StatusCodes.NOT_FOUND).send({
         message: 'Sprint not found'
       })
     }
+
+    const historyEntry = await History.create({
+      field: 'issue',
+      oldValue: null,
+      newValue: JSON.stringify(newIssue),
+      updatedBy: req.user._id
+    })
+
+    newIssue.history.push(historyEntry._id)
+    await newIssue.save()
 
     res.status(StatusCodes.CREATED).send(newIssue)
   } catch (err) {
@@ -62,17 +56,18 @@ export const getIssueDetail = async (req, res, next) => {
     const issue = await Issue.findById(req.params.id)
       .populate('assignee creator')
       .populate({
-        path: 'history.updatedBy',
-        select: 'firstname lastname profilePic'
+        path: 'history',
+        populate: {
+          path: 'updatedBy',
+          select: 'firstname lastname profilePic'
+        }
       })
 
-    if (issue) {
-      await issue.save()
-
-      res.status(StatusCodes.OK).send(issue)
-    } else {
-      next(new ApiError(StatusCodes.BAD_REQUEST, 'Issue not found'))
+    if (!issue) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Issue not found'))
     }
+
+    res.status(StatusCodes.OK).send(issue)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
@@ -80,24 +75,16 @@ export const getIssueDetail = async (req, res, next) => {
 
 export const getIssueList = async (req, res, next) => {
   try {
-    const { projectId, label, priority, assignee, sprint } = req.query
+    const { sprintId, label, priority, assignee } = req.query
 
-    if (!projectId) {
-      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project ID is required'))
+    if (!sprintId) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Sprint ID is required'))
     }
 
-    const project = await Project.findById(projectId)
-    if (!project) {
-      return next(new ApiError(StatusCodes.NOT_FOUND, 'Project not found'))
-    }
-
-    const query = { project: projectId }
+    const query = { sprint: sprintId }
 
     if (label) {
       query.label = { $regex: label, $options: 'i' }
-    }
-    if (sprint) {
-      query.sprint = sprint._id
     }
 
     if (priority) {
@@ -112,6 +99,13 @@ export const getIssueList = async (req, res, next) => {
 
     const issueList = await Issue.find(query)
       .populate('assignee', '-password')
+      .populate({
+        path: 'history',
+        populate: {
+          path: 'updatedBy',
+          select: 'firstname lastname profilePic'
+        }
+      })
       .sort({ updatedAt: -1 })
 
     res.status(StatusCodes.OK).send(issueList)
@@ -129,6 +123,7 @@ export const deleteIssue = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
+
 export const updateIssue = async (req, res, next) => {
   try {
     const { id } = req.params
@@ -156,14 +151,15 @@ export const updateIssue = async (req, res, next) => {
           field: key,
           oldValue: issue[key],
           newValue: updateData[key],
-          updatedBy: userId,
-          updatedAt: new Date()
+          updatedBy: userId
         })
       }
     }
-    if (changes.length > 0) {
-      issue.history?.push(...changes)
-    }
+
+    const historyEntries = await History.insertMany(changes)
+    const historyIds = historyEntries.map(entry => entry._id)
+
+    issue.history.push(...historyIds)
 
     Object.assign(issue, updateData)
     await issue.save()
@@ -192,11 +188,22 @@ export const creatIssueComment = async (req, res, next) => {
     const issue = await Issue.findByIdAndUpdate(id, { $push: { comments: comment } },
       { new: true, useFindAndModify: false })
 
+    const historyEntry = await History.create({
+      field: 'comment',
+      oldValue: null,
+      newValue: JSON.stringify(comment),
+      updatedBy: req.user._id
+    })
+
+    issue.history.push(historyEntry._id)
+    await issue.save()
+
     res.status(StatusCodes.OK).send(issue)
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
 }
+
 export const getIssueComments = async (req, res, next) => {
   try {
     const issueId = req.params.id
@@ -217,6 +224,28 @@ export const getIssueComments = async (req, res, next) => {
     issue.comments.sort((a, b) => b.createdAt - a.createdAt)
 
     res.status(StatusCodes.OK).send(issue.comments)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const getIssueHistory = async (req, res, next) => {
+  try {
+    const issueId = req.params.id
+
+    const issue = await Issue.findById(issueId).populate({
+      path: 'history',
+      populate: {
+        path: 'updatedBy',
+        select: 'firstname lastname profilePic'
+      }
+    })
+
+    if (!issue) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Issue not found'))
+    }
+
+    res.status(StatusCodes.OK).send(issue.history)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }

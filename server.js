@@ -14,14 +14,14 @@ import issueRoute from './routes/issue.route.js'
 import projectRoute from './routes/project.route.js'
 import swaggerDocs from './swagger/swagger.js'
 import sprintRoute from './routes/sprint.route.js'
+import './middleware/dailySummary.js' // Import the cron job module
 
 const PORT = env.PORT || 5000
 
 dotenv.config()
 
 app.use(cors())
-// app.use(logger('dev'))
-app.use(express.json()) // parse incoming rq with JSON payload (from req.body)
+app.use(express.json())
 app.use(cookieParser())
 
 app.use('/api/auth', authRoutes)
