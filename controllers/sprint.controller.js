@@ -97,7 +97,6 @@ export const calculateAndStoreDailySummary = async () => {
   for (const sprint of sprints) {
     const issues = await Issue.find({ sprint: sprint._id })
 
-    // Create an object to store daily summaries
     const dailySummaries = {}
 
     issues.forEach(issue => {
@@ -105,39 +104,37 @@ export const calculateAndStoreDailySummary = async () => {
       const date = currentDate.toISOString().split('T')[0]
       const status = issue.status.toLowerCase()
 
-      // Initialize daily summary if not exists
       if (!dailySummaries[date]) {
         dailySummaries[date] = {
           in_progress: 0,
           new: 0,
-          done: 0
+          done: 0,
+          total: 0
         }
       }
 
-      // Update count for the corresponding status
       dailySummaries[date][status]++
+      dailySummaries[date].total++
     })
 
-    // Save or update DailySummary entries for each date
     await Promise.all(Object.entries(dailySummaries).map(async ([date, data]) => {
-      // Find or create the daily summary for the current date
       let dailySummary = await DailySummary.findOne({ sprint: sprint._id, date })
 
       if (!dailySummary) {
-        // If not exists, create a new one
         dailySummary = new DailySummary({
           sprint: sprint._id,
           date,
           ...data
         })
       } else {
-        // If exists, update the counts
         dailySummary.in_progress = data.in_progress
         dailySummary.new = data.new
         dailySummary.done = data.done
+        dailySummary.total = data.total
       }
 
-      // Save the daily summary
+      console.log(dailySummary)
+
       await dailySummary.save()
     }))
 
@@ -159,6 +156,74 @@ export const getSprintDailySummaries = async (req, res, next) => {
 
     // Return the daily summaries
     return res.status(StatusCodes.OK).json(sprint.dailySummary)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+export const updateSprint = async (req, res, next) => {
+  try {
+    const { isActive, projectId } = req.body
+    const { id } = req.params
+
+    // Find the sprint to be updated
+    const sprint = await Sprint.findById(id)
+
+    if (!sprint) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Sprint not found'))
+    }
+
+    // IsAvtivate = true is "Start Sprint" actions, false is "Complete sprint" action
+    sprint.isActive = isActive
+
+    if (isActive) {
+      // Find the project containing the sprint
+      const project = await Project.findById(projectId)
+
+      if (!project) {
+        return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project not found'))
+      }
+
+      // Deactivate the previous active sprint
+      if (project.activeSprint) {
+        await Sprint.findByIdAndUpdate(project.activeSprint, { isActive: false })
+      }
+
+      // Set the current sprint as the active sprint in the project
+      project.activeSprint = sprint._id
+
+      await project.save()
+    } else {
+      // If the sprint is deactivated, ensure it is removed from the activeSprint field in the project
+      const project = await Project.findById(projectId)
+
+      if (project && project.activeSprint.toString() === sprint._id.toString()) {
+        project.activeSprint = null
+        await project.save()
+      }
+    }
+
+    // Save the updated sprint
+    await sprint.save()
+
+    res.status(StatusCodes.OK).send(sprint)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const deleteSprint = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const sprint = await Sprint.findById(id)
+
+    if (!sprint) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'Sprint not found'))
+    }
+
+    await sprint.deleteOne()
+
+    res.status(StatusCodes.OK).send({ message: 'Sprint deleted successfully' })
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }

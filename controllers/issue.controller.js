@@ -20,11 +20,11 @@ export const createIssue = async (req, res, next) => {
       assignee,
       creator: req.user._id,
       images,
-      sprint: req.body.sprintId
+      sprint: req.body.sprint
     })
 
     const updatedSprint = await Sprint.findByIdAndUpdate(
-      req.body.sprintId,
+      req.body.sprint,
       { $push: { issues: newIssue._id } },
       { new: true, useFindAndModify: false }
     )
@@ -156,15 +156,32 @@ export const updateIssue = async (req, res, next) => {
       }
     }
 
+    console.log(updateData.sprint, issue.sprint)
+    if (updateData.sprint && updateData.sprint !== issue.sprint) {
+      const oldSprint = await Sprint.findByIdAndUpdate(
+        issue.sprint,
+        { $pull: { issues: issue._id } },
+        { new: true }
+      )
+
+      const newSprint = await Sprint.findByIdAndUpdate(
+        updateData.sprint,
+        { $push: { issues: issue._id } },
+        { new: true }
+      )
+
+      console.log('old ', oldSprint)
+      console.log('new ', newSprint)
+    }
+
     const historyEntries = await History.insertMany(changes)
     const historyIds = historyEntries.map(entry => entry._id)
 
-    issue.history.push(...historyIds)
+    updateData.history = [...issue.history, ...historyIds]
 
-    Object.assign(issue, updateData)
-    await issue.save()
+    const updatedIssue = await Issue.findByIdAndUpdate(id, updateData, { new: true })
 
-    res.status(StatusCodes.OK).send(issue)
+    res.status(StatusCodes.OK).send(updatedIssue)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
