@@ -37,6 +37,10 @@ export const getProjectList = async (req, res, next) => {
 
     const projects = await Project.find(query)
       .populate('members issues projectManager')
+      .populate({
+        path: 'backlog',
+        model: Sprint
+      })
       .sort({ updatedAt: -1 })
 
     res.status(StatusCodes.OK).send(projects)
@@ -51,7 +55,12 @@ export const getProjectDetail = async (req, res, next) => {
 
     const project = await Project.findById(id)
       .populate('members projectManager', '-password')
-      .populate('activeSprint')
+      .populate({
+        path: 'backlog',
+        model: Sprint
+      })
+
+    console.log('prj', project.backlog)
 
     if (!project) {
       return res.status(StatusCodes.NOT_FOUND).send({ message: 'Project not found' })
@@ -117,7 +126,9 @@ export const getProjectBacklogList = async (req, res, next) => {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Project not found'))
     }
 
-    const backlogSprints = project.backlog || []
+    let backlogSprints = project.backlog || []
+
+    backlogSprints = backlogSprints.sort((a, b) => (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0))
 
     return res.status(StatusCodes.OK).send(backlogSprints)
   } catch (err) {
