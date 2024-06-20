@@ -2,6 +2,7 @@ import User from '../models/user.model.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { v2 as cloudinary } from 'cloudinary'
+import Issue from '../models/issue.model.js'
 
 export const getUserList = async (req, res, next) => {
   try {
@@ -69,5 +70,71 @@ export const updateUser = async (req, res, next) => {
     res.status(StatusCodes.OK).send(user)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const getUserIssueSummary = async (req, res, next) => {
+  try {
+    const userId = req.params.userId
+    const { sprintId } = req.query
+
+    if (!userId) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'User ID is required'))
+    }
+
+    const query = { assignee: userId }
+    if (sprintId) {
+      query.sprint = sprintId
+    }
+
+    const issues = await Issue.find(query).populate({
+      path: 'history',
+      populate: {
+        path: 'updatedBy',
+        select: 'firstname lastname profilePic'
+      }
+    })
+
+    let issuesCompletedOnTime = 0
+    let issuesCompletedWithoutFeedback = 0
+    let totalIssuesDone = 0
+
+    for (const issue of issues) {
+      const histories = issue.history
+
+      if (histories.length === 0) continue
+
+      const mostRecentStatus = histories.findLast((item) => item.field === 'status' && item.newValue === 'done')
+      if (mostRecentStatus) {
+        totalIssuesDone++
+
+        if (new Date(mostRecentStatus.updatedAt) <= new Date(issue.dueDate)) {
+          issuesCompletedOnTime++
+        }
+
+        const hasFeedback = histories.some(
+          (history) => history.field === 'status' && history.newValue === 'feedback'
+        )
+
+        if (!hasFeedback) {
+          issuesCompletedWithoutFeedback++
+        }
+      }
+    }
+
+    let rating = 0
+    if (totalIssuesDone > 0) {
+      rating = ((issuesCompletedOnTime * 0.5) + (issuesCompletedWithoutFeedback * 0.5)) / totalIssuesDone
+    }
+
+    await User.findByIdAndUpdate(userId, { rating })
+
+    res.status(StatusCodes.OK).send({
+      issuesCompletedOnTime,
+      issuesCompletedWithoutFeedback,
+      rating
+    })
+  } catch (error) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
 }

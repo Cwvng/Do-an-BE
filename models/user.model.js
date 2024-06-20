@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true
   },
+  rating: {
+    type: Number,
+    default: 0
+  },
   authType: {
     type: String,
     enum: ['local', 'google'],
