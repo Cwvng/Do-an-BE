@@ -5,6 +5,7 @@ import Project from '../models/project.model.js'
 import History from '../models/history.model.js'
 import Issue from '../models/issue.model.js'
 import DailySummary from '../models/dailySummary.model.js'
+import User from '../models/user.model.js'
 
 export const createProjectSprint = async (req, res, next) => {
   try {
@@ -79,6 +80,10 @@ export const getSprintDetails = async (req, res, next) => {
             select: 'firstname lastname profilePic'
           }
         }
+      })
+      .populate({
+        path: 'members',
+        model: User
       })
 
     if (!sprint) {

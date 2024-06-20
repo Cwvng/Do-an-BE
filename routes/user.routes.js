@@ -1,5 +1,5 @@
 import express from 'express'
-import { getUserList, updateUser } from '../controllers/user.controller.js'
+import { getUserIssueSummary, getUserList, updateUser } from '../controllers/user.controller.js'
 import { handleAuthentication } from '../middleware/passport.js'
 import uploadCloud from '../config/cloudinary.config.js'
 
@@ -30,4 +30,5 @@ const router = express.Router()
  */
 router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next), getUserList)
 router.patch('/', (req, res, next) => handleAuthentication('jwt', req, res, next), uploadCloud.array('profilePic', 1), updateUser)
+router.get('/:userId/issue-summary', (req, res, next) => handleAuthentication('jwt', req, res, next), uploadCloud.array('profilePic', 1), getUserIssueSummary)
 export default router
