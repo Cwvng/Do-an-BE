@@ -20,6 +20,7 @@ export const sendingMail = async ({ from, to, subject, text }) => {
         user: env.EMAIL,
         pass: env.EMAIL_PASSWORD
       }
+
     })
 
     // Return the transporter variable which has the sendMail method to send the mail

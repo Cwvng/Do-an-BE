@@ -14,5 +14,4 @@ export const env = {
   EMAIL: process.env.EMAIL,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
   SERVER_URI: process.env.SERVER_URI
-
 }

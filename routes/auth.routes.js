@@ -2,10 +2,11 @@ import express from 'express'
 import {
   googleLogin,
   login,
-  logout, ResetPassword,
+  logout,
+  ResetPassword,
   sendEmailResetPassword,
-  signup,
-  verifyEmail
+  sendEmailSignUp,
+  signup
 } from '../controllers/auth.controllers.js'
 import { schemas, validateBody } from '../helpers/routerHelpers.js'
 import { handleAuthentication } from '../middleware/passport.js'
@@ -78,14 +79,14 @@ router.post('/login', validateBody(schemas.authLoginSchema), (req, res, next) =>
  *      500:
  *        description: Server Error
  */
-router.post('/signup', validateBody(schemas.authSignUpSchema), signup)
+router.post('/signup', sendEmailSignUp)
+
+router.post('/signup/:token', validateBody(schemas.authSignUpSchema), signup)
 
 router.post('/logout', logout)
 
 router.post('/reset-password', sendEmailResetPassword)
 router.post('/reset-password/:id/:token', ResetPassword)
-
-router.get('/verify-email/:id/:token', verifyEmail)
 
 router.post('/google-login', (req, res, next) => {
   handleAuthentication('google-plus-token', req, res, next)

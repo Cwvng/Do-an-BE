@@ -52,10 +52,17 @@ export const createMessage = async (req, res, next) => {
 }
 export const getMessageList = async (req, res, next) => {
   try {
-    const messages = await Message.find({ chat: req.params.chatId })
+    const { chatId } = req.params
+    const { page = 1 } = req.query
+
+    const messages = await Message.find({ chat: chatId })
       .populate('sender', '-password')
-      .populate('chat')
-    res.status(StatusCodes.OK).send(messages)
+
+    // Paginate the messages
+    const endIndex = (page - 1) * 15
+    const paginatedMessages = messages.slice(messages.length - 15 - endIndex, messages.length - endIndex)
+
+    res.status(StatusCodes.OK).send(paginatedMessages)
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }
