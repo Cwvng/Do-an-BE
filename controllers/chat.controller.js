@@ -4,6 +4,18 @@ import Chat from '../models/chat.model.js'
 import User from '../models/user.model.js'
 
 export const getChatDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    console.log(id)
+
+    const chat = await Chat.findById(id).populate('users')
+
+    res.status(StatusCodes.OK).send(chat)
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+export const createChat = async (req, res, next) => {
   const { userId } = req.body
 
   if (!userId) return next(new ApiError(StatusCodes.BAD_REQUEST, 'User Id not found'))
