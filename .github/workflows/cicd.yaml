@@ -47,7 +47,8 @@ jobs:
 
       - name: Copy docker-compose file
         run: |
-          scp -i ~/.ssh/id_rsa docker-compose.yaml ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}:/home/datn/be/
+          scp -i ~/.ssh/id_rsa docker-compose.yaml ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }}:/home/liinhhnt/
+          ssh -i ~/.ssh/id_rsa ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} "sudo mv /home/liinhhnt/docker-compose.yaml /home/datn/be/"
 
       - name: SSH to GGC and pull new images
         run: |
