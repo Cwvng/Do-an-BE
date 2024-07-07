@@ -1,11 +1,11 @@
 import express from 'express'
 import {
   createChat,
-  addUserToGroupChat,
-  createGroupChat, deleteChat,
+  createGroupChat,
+  deleteChat,
+  getChatDetail,
   getChatList,
-  removeUserFromGroupChat,
-  renameGroupChat, getChatDetail
+  updateChat
 } from '../controllers/chat.controller.js'
 import { handleAuthentication } from '../middleware/passport.js'
 import { getMessageList } from '../controllers/message.controller.js'
@@ -18,7 +18,5 @@ router.get('/', (req, res, next) => handleAuthentication('jwt', req, res, next),
 router.get('/:chatId/messages', (req, res, next) => handleAuthentication('jwt', req, res, next), getMessageList)
 router.delete('/:chatId', (req, res, next) => handleAuthentication('jwt', req, res, next), deleteChat)
 router.post('/group', (req, res, next) => handleAuthentication('jwt', req, res, next), createGroupChat)
-router.put('/group', (req, res, next) => handleAuthentication('jwt', req, res, next), renameGroupChat)
-router.put('/group-users', (req, res, next) => handleAuthentication('jwt', req, res, next), addUserToGroupChat)
-router.delete('/group-users', (req, res, next) => handleAuthentication('jwt', req, res, next), removeUserFromGroupChat)
+router.put('/:id', (req, res, next) => handleAuthentication('jwt', req, res, next), updateChat)
 export default router

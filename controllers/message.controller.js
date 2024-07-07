@@ -59,10 +59,11 @@ export const getMessageList = async (req, res, next) => {
       .populate('sender', '-password')
 
     // Paginate the messages
-    const endIndex = (page - 1) * 15
-    const paginatedMessages = messages.slice(messages.length - 15 - endIndex, messages.length - endIndex)
 
-    res.status(StatusCodes.OK).send(paginatedMessages)
+    const startIndex = (page - 1) * 15
+
+    const paginatedMessages = messages.slice((messages.length - 15 - startIndex) >= 0 ? messages.length - 15 - startIndex : 0, messages.length)
+    res.status(StatusCodes.OK).send({ messages: paginatedMessages, total: messages.length })
   } catch (error) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message))
   }

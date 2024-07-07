@@ -110,79 +110,7 @@ export const createGroupChat = async (req, res, next) => {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
 }
-export const renameGroupChat = async (req, res, next) => {
-  try {
-    const { chatId, name } = req.body
 
-    const updatedChat = await Chat.findByIdAndUpdate(
-      chatId,
-      { chatName: name },
-      { new: true }
-    ).populate('users', '-password')
-      .populate('groupAdmin', '-password')
-
-    if (!updatedChat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-    res.status(StatusCodes.OK).send({
-      message: 'Change name successfully',
-      updatedChat
-    })
-  } catch (err) {
-    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
-  }
-}
-export const addUserToGroupChat = async (req, res, next) => {
-  try {
-    const { chatId, userId } = req.body
-
-    const chat = await Chat.findById(chatId).populate('users', '-password')
-
-    if (!chat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-
-    const index = chat.users.findIndex((item) => item._id.equals(userId))
-    if (index > -1) { next(new ApiError(StatusCodes.BAD_REQUEST, 'User already in chat group')) }
-
-    const updatedChat = await Chat.findByIdAndUpdate(
-      chatId,
-      { $push: { users: userId } },
-      { new: true }
-    ).populate('users', '-password')
-      .populate('groupAdmin', '-password')
-
-    res.status(StatusCodes.OK).send({
-      message: 'Added an user to group chat successfully',
-      updatedChat
-    })
-  } catch (err) {
-    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
-  }
-}
-
-export const removeUserFromGroupChat = async (req, res, next) => {
-  try {
-    const { chatId, userId } = req.body
-
-    const chat = await Chat.findById(chatId).populate('users', '-password')
-
-    if (!chat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-
-    const index = chat.users.findIndex((item) => item._id.equals(userId))
-    if (index < 0) { next(new ApiError(StatusCodes.BAD_REQUEST, 'User not found')) }
-    const updatedChat = await Chat.findByIdAndUpdate(
-      chatId,
-      { $pull: { users: userId } },
-      { new: true }
-    ).populate('users', '-password')
-      .populate('groupAdmin', '-password')
-
-    if (!updatedChat) next(new ApiError(StatusCodes.BAD_REQUEST, 'Chat not found'))
-    res.status(StatusCodes.OK).send({
-      message: 'Removed an user to group chat successfully',
-      updatedChat
-    })
-  } catch (err) {
-    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
-  }
-}
 export const deleteChat = async (req, res, next) => {
   try {
     const chat = await Chat.findByIdAndDelete(req.params.chatId)
@@ -191,6 +119,27 @@ export const deleteChat = async (req, res, next) => {
       message: 'Removed an user to group chat successfully',
       chat
     })
+  } catch (err) {
+    next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
+  }
+}
+
+export const updateChat = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    if (!id) res.status(StatusCodes.BAD_REQUEST).send({ message: 'Chat id not found' })
+
+    const { chatName, users } = req.body
+
+    const updatedData = { users }
+
+    if (chatName) updatedData.chatName = chatName
+
+    const updatedChat = await Chat.findByIdAndUpdate(id, updatedData, { new: true, useFindAndModify: false })
+
+    if (!updatedChat) res.status(StatusCodes.BAD_REQUEST).send({ message: 'Chat update failed' })
+
+    res.status(StatusCodes.OK).send(updatedChat)
   } catch (err) {
     next(new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, err.message))
   }
