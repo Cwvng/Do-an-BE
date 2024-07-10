@@ -15,6 +15,7 @@ const issueSchema = new mongoose.Schema({
   history: [{ type: mongoose.Schema.Types.ObjectId, ref: 'History' }],
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
   estimateTime: { type: Number },
+  pullRequest: { type: String },
   loggedTime: { type: Number, default: 0 }
 }, { timestamps: true, required: true })
 
