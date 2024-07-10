@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true
   },
+  dob: { type: Date },
+  github: { type: String },
   rating: {
     type: Number,
     default: 0

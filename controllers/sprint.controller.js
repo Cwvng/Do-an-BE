@@ -170,30 +170,27 @@ export const updateSprint = async (req, res, next) => {
     const { isActive, projectId } = req.body
     const { id } = req.params
 
-    // Find the sprint to be updated
+    console.log(id)
+
     const sprint = await Sprint.findById(id)
 
     if (!sprint) {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Sprint not found'))
     }
 
-    // IsAvtivate = true is "Start Sprint" actions, false is "Complete sprint" action
     sprint.isActive = isActive
 
     if (isActive) {
-      // Find the project containing the sprint
       const project = await Project.findById(projectId)
 
       if (!project) {
         return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project not found'))
       }
 
-      // Deactivate the previous active sprint
       if (project.activeSprint) {
         await Sprint.findByIdAndUpdate(project.activeSprint, { isActive: false })
       }
 
-      // Set the current sprint as the active sprint in the project
       project.activeSprint = sprint._id
 
       await project.save()
