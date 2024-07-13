@@ -23,10 +23,7 @@ export const createProjectSprint = async (req, res, next) => {
       return next(new ApiError(StatusCodes.BAD_REQUEST, 'Project not found'))
     }
 
-    let ordinary = 1
-    if (project.activeSprint) {
-      ordinary = +project.backlog.length + 1
-    }
+    const ordinary = +project.backlog.length + 1
 
     const isActive = !project.activeSprint
 
@@ -222,6 +219,11 @@ export const deleteSprint = async (req, res, next) => {
     if (!sprint) {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Sprint not found'))
     }
+
+    await Project.updateMany(
+      { backlog: id },
+      { $pull: { backlog: id } }
+    )
 
     await sprint.deleteOne()
 
