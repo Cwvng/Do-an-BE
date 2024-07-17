@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 
 const issueSchema = new mongoose.Schema({
   label: { type: String, trim: true },
-  subject: { type: String, trim: true },
+  type: { type: String, enum: ['bug', 'task', 'subtask'], default: 'task' },
   description: { type: String, trim: true },
   status: { type: String, trim: true },
   priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'low' },
